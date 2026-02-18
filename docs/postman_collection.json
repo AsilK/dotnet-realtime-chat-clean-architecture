@@ -1,0 +1,41 @@
+﻿{
+  "info": {
+    "name": "ChatApp API",
+    "_postman_id": "d5f06e85-86f4-4f88-ac61-f3be032a5d64",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth - Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "register"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"user@example.com\",\n  \"username\": \"user1\",\n  \"password\": \"StrongP@ss1\",\n  \"displayName\": \"User One\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Health Live",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/health/live",
+          "host": ["{{baseUrl}}"],
+          "path": ["health", "live"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" }
+  ]
+}

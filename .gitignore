@@ -1,0 +1,28 @@
+﻿# Build artifacts
+**/bin/
+**/obj/
+
+# Test / coverage
+TestResults/
+**/TestResults/
+coverage-report/
+
+# Local tools
+.tools/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# User/local secrets
+*.user
+*.suo
+*.pfx
+
+# Docker override
+docker-compose.override.yml
