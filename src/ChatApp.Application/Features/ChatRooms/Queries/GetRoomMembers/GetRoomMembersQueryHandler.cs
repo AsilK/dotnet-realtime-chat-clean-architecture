@@ -18,13 +18,14 @@ public sealed class GetRoomMembersQueryHandler : IRequestHandler<GetRoomMembersQ
 
     public async Task<Result<IReadOnlyCollection<ChatRoomMemberDto>>> Handle(GetRoomMembersQuery request, CancellationToken cancellationToken)
     {
-        var room = await _unitOfWork.ChatRooms.GetByIdAsync(request.RoomId, cancellationToken);
+        var room = await _unitOfWork.ChatRooms.GetByIdReadOnlyAsync(request.RoomId, cancellationToken);
         if (room is null)
         {
             return Result.Failure<IReadOnlyCollection<ChatRoomMemberDto>>("Room not found.");
         }
 
-        var members = room.Members.Select(_mapper.Map<ChatRoomMemberDto>).ToArray();
-        return Result.Success<IReadOnlyCollection<ChatRoomMemberDto>>(members);
+        var members = await _unitOfWork.ChatRooms.GetRoomMembersAsync(request.RoomId, cancellationToken);
+        var mappedMembers = members.Select(_mapper.Map<ChatRoomMemberDto>).ToArray();
+        return Result.Success<IReadOnlyCollection<ChatRoomMemberDto>>(mappedMembers);
     }
 }

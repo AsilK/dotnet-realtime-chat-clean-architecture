@@ -35,8 +35,8 @@ public sealed class MessagesController : ControllerBase
         => _mediator.Send(new DeleteMessageCommand(messageId));
 
     [HttpGet("room/{roomId:guid}")]
-    public Task<Result<PaginatedList<MessageDto>>> GetRoomMessages(Guid roomId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 50)
-        => _mediator.Send(new GetRoomMessagesQuery(roomId, pageNumber, pageSize));
+    public Task<Result<PaginatedList<MessageDto>>> GetRoomMessages(Guid roomId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 50, [FromQuery] Guid? beforeMessageId = null)
+        => _mediator.Send(new GetRoomMessagesQuery(roomId, pageNumber, pageSize, beforeMessageId));
 
     [HttpGet("room/{roomId:guid}/search")]
     public Task<Result<PaginatedList<MessageDto>>> Search(Guid roomId, [FromQuery] string term, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 50)

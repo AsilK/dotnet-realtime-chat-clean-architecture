@@ -20,7 +20,7 @@ public sealed class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQ
 
     public async Task<Result<UserDto>> Handle(GetCurrentUserQuery request, CancellationToken cancellationToken)
     {
-        var user = await _unitOfWork.Users.GetByIdAsync(_currentUser.UserId, cancellationToken);
+        var user = await _unitOfWork.Users.GetByIdReadOnlyAsync(_currentUser.UserId, cancellationToken);
         if (user is null)
         {
             return Result.Failure<UserDto>("Current user not found.");

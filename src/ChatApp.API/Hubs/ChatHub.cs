@@ -1,4 +1,4 @@
-﻿using ChatApp.Application.Common.Interfaces;
+using ChatApp.Application.Common.Interfaces;
 using ChatApp.Application.Features.ChatRooms.Queries.GetUserRooms;
 using ChatApp.Application.Features.Messages.Commands.MarkMessageAsRead;
 using MediatR;
@@ -10,6 +10,8 @@ namespace ChatApp.API.Hubs;
 [Authorize]
 public sealed class ChatHub : Hub<IChatClient>
 {
+    private const int RoomQueryPageSize = 100;
+
     private readonly IMediator _mediator;
     private readonly ICacheService _cache;
 
@@ -31,16 +33,13 @@ public sealed class ChatHub : Hub<IChatClient>
         await _cache.SetAsync($"user:{userId}:connection", Context.ConnectionId, TimeSpan.FromHours(4));
         await _cache.SetAsync($"user:{userId}:status", "online", TimeSpan.FromHours(4));
 
-        var rooms = await _mediator.Send(new GetUserRoomsQuery());
-        if (rooms.IsSuccess && rooms.Value is not null)
+        var roomIds = await GetUserRoomIdsAsync();
+        if (roomIds.Count > 0)
         {
-            foreach (var room in rooms.Value.Items)
-            {
-                await Groups.AddToGroupAsync(Context.ConnectionId, $"room_{room.Id}");
-            }
+            await Task.WhenAll(roomIds.Select(roomId => Groups.AddToGroupAsync(Context.ConnectionId, $"room_{roomId}")));
+            await NotifyUserStatusAsync(roomIds, userId, "online");
         }
 
-        await Clients.All.UserStatusChanged(userId, "online");
         await base.OnConnectedAsync();
     }
 
@@ -53,7 +52,8 @@ public sealed class ChatHub : Hub<IChatClient>
             await _cache.SetAsync($"user:{userId}:status", "offline", TimeSpan.FromHours(4));
             await _cache.SetAsync($"user:{userId}:lastSeen", DateTime.UtcNow.ToString("O"), TimeSpan.FromDays(7));
 
-            await Clients.All.UserStatusChanged(userId, "offline");
+            var roomIds = await GetUserRoomIdsAsync();
+            await NotifyUserStatusAsync(roomIds, userId, "offline");
         }
 
         await base.OnDisconnectedAsync(exception);
@@ -76,9 +76,53 @@ public sealed class ChatHub : Hub<IChatClient>
         await Clients.OthersInGroup($"room_{roomId}").UserTyping(Context.UserIdentifier ?? string.Empty, roomId);
     }
 
-    public async Task MarkMessageAsRead(Guid messageId)
+    public async Task MarkMessageAsRead(Guid messageId, Guid? roomId = null)
     {
-        await _mediator.Send(new MarkMessageAsReadCommand(messageId));
-        await Clients.Group($"room_read_{messageId}").MessageRead(messageId, Context.UserIdentifier ?? string.Empty);
+        var result = await _mediator.Send(new MarkMessageAsReadCommand(messageId, roomId));
+        if (!result.IsSuccess || result.Value == Guid.Empty)
+        {
+            return;
+        }
+
+        await Clients.Group($"room_{result.Value}").MessageRead(messageId, Context.UserIdentifier ?? string.Empty);
+    }
+
+    private async Task<IReadOnlyCollection<Guid>> GetUserRoomIdsAsync()
+    {
+        var roomIds = new HashSet<Guid>();
+        var pageNumber = 1;
+
+        while (true)
+        {
+            var rooms = await _mediator.Send(new GetUserRoomsQuery(pageNumber, RoomQueryPageSize));
+            if (!rooms.IsSuccess || rooms.Value is null || rooms.Value.Items.Count == 0)
+            {
+                break;
+            }
+
+            foreach (var room in rooms.Value.Items)
+            {
+                roomIds.Add(room.Id);
+            }
+
+            if (roomIds.Count >= rooms.Value.TotalCount)
+            {
+                break;
+            }
+
+            pageNumber++;
+        }
+
+        return roomIds.ToArray();
+    }
+
+    private Task NotifyUserStatusAsync(IReadOnlyCollection<Guid> roomIds, string userId, string status)
+    {
+        if (roomIds.Count == 0)
+        {
+            return Task.CompletedTask;
+        }
+
+        return Task.WhenAll(roomIds.Select(roomId => Clients.Group($"room_{roomId}").UserStatusChanged(userId, status)));
     }
 }

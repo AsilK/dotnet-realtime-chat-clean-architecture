@@ -5,6 +5,7 @@ namespace ChatApp.Application.Common.Interfaces;
 
 public interface IUserRepository : IBaseRepository<User>
 {
+    Task<User?> GetByIdReadOnlyAsync(Guid id, CancellationToken cancellationToken = default);
     Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
     Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default);
     Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default);

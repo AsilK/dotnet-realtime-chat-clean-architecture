@@ -17,5 +17,6 @@ public sealed class MessageConfiguration : IEntityTypeConfiguration<Message>
 
         builder.HasIndex(x => new { x.ChatRoomId, x.CreatedAtUtc });
         builder.HasIndex(x => x.ReplyToMessageId);
+        builder.HasIndex(x => x.Content).HasMethod("gin").HasOperators("gin_trgm_ops");
     }
 }

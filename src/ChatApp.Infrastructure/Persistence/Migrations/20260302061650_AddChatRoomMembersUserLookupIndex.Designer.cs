@@ -3,6 +3,7 @@ using System;
 using ChatApp.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,16 +12,17 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ChatApp.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260302061650_AddChatRoomMembersUserLookupIndex")]
+    partial class AddChatRoomMembersUserLookupIndex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("ChatApp.Domain.Entities.ChatRoom", b =>
@@ -93,6 +95,9 @@ namespace ChatApp.Infrastructure.Persistence.Migrations
 
                     b.HasKey("ChatRoomId", "UserId");
 
+                    b.HasIndex("ChatRoomId", "UserId")
+                        .IsUnique();
+
                     b.HasIndex("UserId", "IsBanned", "ChatRoomId");
 
                     b.ToTable("ChatRoomMembers", (string)null);
@@ -145,11 +150,6 @@ namespace ChatApp.Infrastructure.Persistence.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Content");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Content"), "gin");
-                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Content"), new[] { "gin_trgm_ops" });
 
                     b.HasIndex("ReplyToMessageId");
 
@@ -286,11 +286,6 @@ namespace ChatApp.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DisplayName");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("DisplayName"), "gin");
-                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("DisplayName"), new[] { "gin_trgm_ops" });
-
                     b.HasIndex("Email")
                         .IsUnique();
 
@@ -312,6 +307,9 @@ namespace ChatApp.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("BlockerUserId", "BlockedUserId");
+
+                    b.HasIndex("BlockerUserId", "BlockedUserId")
+                        .IsUnique();
 
                     b.ToTable("UserBlocks", (string)null);
                 });

@@ -11,6 +11,5 @@ public sealed class UserBlockConfiguration : IEntityTypeConfiguration<UserBlock>
         builder.ToTable("UserBlocks");
 
         builder.HasKey(x => new { x.BlockerUserId, x.BlockedUserId });
-        builder.HasIndex(x => new { x.BlockerUserId, x.BlockedUserId }).IsUnique();
     }
 }

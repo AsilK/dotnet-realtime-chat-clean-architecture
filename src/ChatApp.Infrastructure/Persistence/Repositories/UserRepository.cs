@@ -7,6 +7,8 @@ namespace ChatApp.Infrastructure.Persistence.Repositories;
 
 public sealed class UserRepository : BaseRepository<User>, IUserRepository
 {
+    private const int MaxPageSize = 100;
+
     public UserRepository(ApplicationDbContext context) : base(context)
     {
     }
@@ -16,9 +18,15 @@ public sealed class UserRepository : BaseRepository<User>, IUserRepository
         return DbSet.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
+    public Task<User?> GetByIdReadOnlyAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return DbSet.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
     public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        return DbSet.FirstOrDefaultAsync(x => x.Email == email.ToLower(), cancellationToken);
+        var normalizedEmail = email.ToLowerInvariant();
+        return DbSet.FirstOrDefaultAsync(x => x.Email == normalizedEmail, cancellationToken);
     }
 
     public Task<User?> GetByUsernameAsync(string username, CancellationToken cancellationToken = default)
@@ -28,7 +36,8 @@ public sealed class UserRepository : BaseRepository<User>, IUserRepository
 
     public Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        return DbSet.AnyAsync(x => x.Email == email.ToLower(), cancellationToken);
+        var normalizedEmail = email.ToLowerInvariant();
+        return DbSet.AnyAsync(x => x.Email == normalizedEmail, cancellationToken);
     }
 
     public Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default)
@@ -38,11 +47,18 @@ public sealed class UserRepository : BaseRepository<User>, IUserRepository
 
     public async Task<PaginatedList<User>> SearchAsync(string? term, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
     {
-        var query = DbSet.AsQueryable();
+        pageNumber = Math.Max(pageNumber, 1);
+        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+
+        var query = DbSet.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(term))
         {
-            query = query.Where(x => x.Username.Contains(term) || x.DisplayName.Contains(term) || x.Email.Contains(term));
+            var normalizedTerm = term.Trim();
+            query = query.Where(x =>
+                EF.Functions.ILike(x.Username, $"%{normalizedTerm}%") ||
+                EF.Functions.ILike(x.DisplayName, $"%{normalizedTerm}%") ||
+                EF.Functions.ILike(x.Email, $"%{normalizedTerm}%"));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);

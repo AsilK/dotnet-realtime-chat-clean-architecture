@@ -18,7 +18,7 @@ public sealed class GetRoomByIdQueryHandler : IRequestHandler<GetRoomByIdQuery, 
 
     public async Task<Result<ChatRoomDto>> Handle(GetRoomByIdQuery request, CancellationToken cancellationToken)
     {
-        var room = await _unitOfWork.ChatRooms.GetByIdAsync(request.RoomId, cancellationToken);
+        var room = await _unitOfWork.ChatRooms.GetByIdReadOnlyAsync(request.RoomId, cancellationToken);
         return room is null
             ? Result.Failure<ChatRoomDto>("Room not found.")
             : Result.Success(_mapper.Map<ChatRoomDto>(room));

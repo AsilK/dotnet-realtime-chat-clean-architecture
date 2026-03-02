@@ -13,7 +13,6 @@ public sealed class ChatRoomMemberConfiguration : IEntityTypeConfiguration<ChatR
 
         builder.HasKey(x => new { x.ChatRoomId, x.UserId });
         builder.Property(x => x.Role).HasConversion<int>().HasDefaultValue(MemberRole.Member);
-
-        builder.HasIndex(x => new { x.ChatRoomId, x.UserId }).IsUnique();
+        builder.HasIndex(x => new { x.UserId, x.IsBanned, x.ChatRoomId });
     }
 }

@@ -10,16 +10,16 @@ public sealed class RequestPasswordResetCommandHandler : IRequestHandler<Request
 
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICacheService _cacheService;
-    private readonly IEmailSender _emailSender;
+    private readonly IEmailDispatchQueue _emailDispatchQueue;
 
     public RequestPasswordResetCommandHandler(
         IUnitOfWork unitOfWork,
         ICacheService cacheService,
-        IEmailSender emailSender)
+        IEmailDispatchQueue emailDispatchQueue)
     {
         _unitOfWork = unitOfWork;
         _cacheService = cacheService;
-        _emailSender = emailSender;
+        _emailDispatchQueue = emailDispatchQueue;
     }
 
     public async Task<Result> Handle(RequestPasswordResetCommand request, CancellationToken cancellationToken)
@@ -38,7 +38,7 @@ public sealed class RequestPasswordResetCommandHandler : IRequestHandler<Request
         var subject = "ChatApp - Password Reset";
         var body = $"<p>Hello {user.DisplayName},</p><p>Use this token to reset your password:</p><p><b>{rawToken}</b></p><p>This token expires in 1 hour.</p>";
 
-        await _emailSender.SendAsync(user.Email, subject, body, cancellationToken);
+        await _emailDispatchQueue.QueueAsync(user.Email, subject, body, cancellationToken);
         return Result.Success();
     }
 }

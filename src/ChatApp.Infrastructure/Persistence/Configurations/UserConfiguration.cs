@@ -22,5 +22,6 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasIndex(x => x.Email).IsUnique();
         builder.HasIndex(x => x.Username).IsUnique();
+        builder.HasIndex(x => x.DisplayName).HasMethod("gin").HasOperators("gin_trgm_ops");
     }
 }

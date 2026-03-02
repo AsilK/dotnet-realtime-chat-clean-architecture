@@ -10,16 +10,16 @@ public sealed class RequestEmailVerificationCommandHandler : IRequestHandler<Req
 
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICacheService _cacheService;
-    private readonly IEmailSender _emailSender;
+    private readonly IEmailDispatchQueue _emailDispatchQueue;
 
     public RequestEmailVerificationCommandHandler(
         IUnitOfWork unitOfWork,
         ICacheService cacheService,
-        IEmailSender emailSender)
+        IEmailDispatchQueue emailDispatchQueue)
     {
         _unitOfWork = unitOfWork;
         _cacheService = cacheService;
-        _emailSender = emailSender;
+        _emailDispatchQueue = emailDispatchQueue;
     }
 
     public async Task<Result> Handle(RequestEmailVerificationCommand request, CancellationToken cancellationToken)
@@ -38,7 +38,7 @@ public sealed class RequestEmailVerificationCommandHandler : IRequestHandler<Req
         var subject = "ChatApp - Email Verification";
         var body = $"<p>Hello {user.DisplayName},</p><p>Please verify your email with this token:</p><p><b>{rawToken}</b></p><p>This token expires in 24 hours.</p>";
 
-        await _emailSender.SendAsync(user.Email, subject, body, cancellationToken);
+        await _emailDispatchQueue.QueueAsync(user.Email, subject, body, cancellationToken);
         return Result.Success();
     }
 }

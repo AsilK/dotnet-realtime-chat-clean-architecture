@@ -28,6 +28,8 @@ public static class DependencyInjection
 
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.Configure<SmtpSettings>(configuration.GetSection(SmtpSettings.SectionName));
+        services.Configure<EmailQueueOptions>(configuration.GetSection(EmailQueueOptions.SectionName));
+        services.Configure<RefreshTokenCleanupOptions>(configuration.GetSection(RefreshTokenCleanupOptions.SectionName));
 
         var jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>() ?? new JwtSettings();
         var secret = string.IsNullOrWhiteSpace(jwtSettings.Secret)
@@ -81,6 +83,10 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ICacheService, RedisCacheService>();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
+        services.AddSingleton<EmailDispatchQueue>();
+        services.AddSingleton<IEmailDispatchQueue>(sp => sp.GetRequiredService<EmailDispatchQueue>());
+        services.AddHostedService<EmailDispatchBackgroundService>();
+        services.AddHostedService<RefreshTokenCleanupBackgroundService>();
 
         return services;
     }

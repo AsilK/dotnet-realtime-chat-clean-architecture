@@ -18,7 +18,7 @@ public sealed class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, 
 
     public async Task<Result<UserDto>> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
     {
-        var user = await _unitOfWork.Users.GetByIdAsync(request.UserId, cancellationToken);
+        var user = await _unitOfWork.Users.GetByIdReadOnlyAsync(request.UserId, cancellationToken);
         return user is null
             ? Result.Failure<UserDto>("User not found.")
             : Result.Success(_mapper.Map<UserDto>(user));
