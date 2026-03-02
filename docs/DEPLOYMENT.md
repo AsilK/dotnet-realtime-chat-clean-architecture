@@ -61,6 +61,8 @@ docker compose down
 - `JwtSettings__RefreshTokenExpirationDays`
 - `Serilog__SeqUrl`
 
+`POSTGRES_PASSWORD` and `JWT_SECRET` must be set before running `docker compose up`.
+
 ### SMTP environment variables
 
 - `Smtp__Enabled`

@@ -36,6 +36,7 @@ License: [MIT](LICENSE)
 ### 1) Start with Docker Compose
 
 Copy `.env.example` to `.env` and replace placeholder secrets before startup.
+`POSTGRES_PASSWORD` and `JWT_SECRET` are required for compose startup.
 
 ```bash
 docker compose up -d --build
