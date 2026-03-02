@@ -1,70 +1,70 @@
-﻿# Contributing
+# Contributing
 
-Bu dokuman, repoya katkida bulunurken takip edilmesi gereken teknik ve surec standartlarini tanimlar.
+This guide defines technical and process expectations for contributions.
 
-## 1. Gelistirme Prensipleri
+## 1. Engineering Principles
 
-- Islev dogrulugu birinci onceliktir.
-- Mimari katman sinirlari korunur.
-- Yeni kod test ve dokuman ile birlikte gelir.
-- Gereksiz soyutlama ve gereksiz bagimlilik eklenmez.
+- Correctness is the first priority.
+- Respect architecture boundaries.
+- Deliver tests and documentation with code changes.
+- Avoid unnecessary abstraction and dependency sprawl.
 
-## 2. Branch ve PR Akisi
+## 2. Branching and Pull Request Flow
 
-- `main` daima deploy edilebilir kalitede tutulur.
-- Her is icin ayri branch acilir.
-- Onerilen branch adlari:
-  - `feat/<kisa-aciklama>`
-  - `fix/<kisa-aciklama>`
-  - `chore/<kisa-aciklama>`
+- Keep `main` in deployable condition.
+- Use a dedicated branch per change.
+- Recommended branch naming:
+  - `feat/<short-description>`
+  - `fix/<short-description>`
+  - `chore/<short-description>`
 
-PR gereksinimleri:
+PR requirements:
 
-- Ne degisti
-- Neden degisti
-- Risk ve geri donus plani
-- Test kaniti (komut ciktilari veya ekran goruntusu)
+- what changed
+- why it changed
+- risk and rollback notes
+- test evidence (command output or screenshots)
 
-## 3. Kod Standartlari
+## 3. Code Standards
 
 ### Backend
 
-- C# naming convention ve nullable disiplini korunur.
-- Handler icinde is kurali disina cikilmamali, domain kurali domainde kalmali.
-- Controllerlar thin tutulmali, business logic handlerlarda olmali.
-- Pipeline behaviorlar bypass edilmemeli.
+- Follow C# naming conventions and nullable discipline.
+- Keep business rules in domain/application layers.
+- Keep controllers thin; business logic belongs in handlers.
+- Do not bypass pipeline behaviors.
 
 ### Frontend
 
-- Feature tabanli klasorleme korunmali.
-- API call ve state mantigi UI render kodundan ayrilmali.
-- Formlarda validation ve error state net olmalidir.
-- QA panel degisiklikleri güvenlik etkisi acisindan degerlendirilmelidir.
+- Preserve feature-based folder structure.
+- Keep API/state logic separate from render-only components.
+- Keep form validation and error states explicit.
+- Review QA panel changes for security exposure.
 
-## 4. Commit Mesaj Formati
+## 4. Commit Message Format
 
-Onerilen format:
+Recommended format:
 
 ```text
 type(scope): short summary
 ```
 
-Ornekler:
+Examples:
 
 - `feat(chat): add cursor based message loading`
 - `fix(auth): handle refresh token race condition`
 - `docs(readme): rewrite setup and architecture sections`
 
-## 5. Lokal Dogrulama Checklist
+## 5. Local Validation Checklist
 
-PR acmadan once minimum:
+Before opening a PR, at minimum run:
 
 ```bash
 dotnet build
 dotnet test
 ```
 
-Web degisikliginde:
+For frontend changes, also run:
 
 ```bash
 cd src/ChatApp.Web
@@ -72,41 +72,41 @@ npm run build
 npm run test:e2e
 ```
 
-## 6. Dokumantasyon Kurali
+## 6. Documentation Rules
 
-Su durumlarda dokuman guncellenmelidir:
+Update documentation for the following changes:
 
-- Yeni endpoint veya sozlesme degisikligi
-- Config/env var degisikligi
-- Mimari karar degisikligi
-- Operasyonel davranis degisikligi
+- new endpoints or contract updates
+- environment/config changes
+- architecture decision updates
+- operational behavior changes
 
-Guncellenmesi beklenen dosyalar:
+Expected files to update where relevant:
 
 - `README.md`
-- ilgili `docs/*.md`
-- gerekiyorsa `docs/adr/*`
+- corresponding `docs/*.md`
+- `docs/adr/*` when decisions change
 
-## 7. Review Beklentileri
+## 7. Review Expectations
 
-Code review'da su sorular cevaplanabilir olmalidir:
+A reviewer should be able to answer:
 
-- Bu degisiklik hangi problemi cozuyor
-- Mevcut davranisi nasil etkiliyor
-- Olasi failure mode nedir
-- Rollback nasil yapilacak
+- What problem does this change solve?
+- How does it affect current behavior?
+- What are likely failure modes?
+- How can this be rolled back?
 
-## 8. Yasakli Pratikler
+## 8. Disallowed Practices
 
-- Secrets'i kod veya repo icine yazmak
-- Test kaniti olmadan kritik davranis degisikligi merge etmek
-- Katman bagimlilik yonunu bozmak
-- Uretim guvenlik ayarlarini gecici diye acik birakmak
+- committing secrets to source control
+- merging critical behavior changes without test evidence
+- breaking dependency direction between layers
+- leaving production security settings permissive
 
-## 9. Iletisim ve Eskalasyon
+## 9. Escalation Guidance
 
-Riskli degisikliklerde (auth, migration, rate limit, data silme):
+For risk-sensitive changes (auth, migrations, rate limits, destructive data paths):
 
-- PR aciklamasinda etki analizi yaz
-- En az bir ek reviewer iste
-- Gerekirse rollout planini maddeli ver
+- add impact analysis in PR description
+- request at least one additional reviewer
+- include rollout/rollback plan

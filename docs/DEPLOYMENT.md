@@ -1,18 +1,18 @@
-﻿# Deployment
+# Deployment
 
-Bu dokuman, ChatApp uygulamasinin docker tabanli ortamlarda guvenli ve tekrar edilebilir sekilde nasil yayina alinacagini aciklar.
+This document explains how to deploy ChatApp reliably and securely in Docker-based environments.
 
-## 1. Dagitim Topolojisi
+## 1. Deployment Topology
 
-Docker Compose konfigurasyonunda su servisler bulunur:
+The Docker Compose setup includes:
 
-- `web` (Vite tabanli React UI)
+- `web` (Vite/React frontend)
 - `api` (ASP.NET Core API + SignalR)
-- `postgres` (kalici veri)
+- `postgres` (primary relational database)
 - `redis` (cache + SignalR backplane)
-- `seq` (log izleme)
+- `seq` (centralized log viewer)
 
-Portlar:
+Default port mapping:
 
 - `5173` -> web
 - `5000` -> api
@@ -20,46 +20,48 @@ Portlar:
 - `6379` -> redis
 - `5341` -> seq
 
-## 2. Gereksinimler
+## 2. Prerequisites
 
 - Docker Engine + Docker Compose
-- En az 4 CPU / 8 GB RAM (gelistirme ortami icin onerilen)
-- Uretim icin TLS terminate eden reverse proxy (Nginx, Traefik, cloud LB)
+- Recommended local capacity: at least 4 CPU / 8 GB RAM
+- For production: TLS termination at reverse proxy or load balancer
 
-## 3. Hemen Calistirma
+## 3. Quick Start
 
 ```bash
 docker compose up -d --build
 ```
 
-Dogrulama:
+Validation:
 
 ```bash
 curl http://localhost:5000/health/live
 curl http://localhost:5000/health/ready
 ```
 
-Kapatma:
+Shutdown:
 
 ```bash
 docker compose down
 ```
 
-## 4. Konfigurasyon Matrisi
+## 4. Configuration Matrix
 
-### API kritik env varlar
+### Critical API environment variables
 
 - `ASPNETCORE_ENVIRONMENT`
 - `ConnectionStrings__DefaultConnection`
+- `POSTGRES_PASSWORD` (used by both DB container and API connection string)
 - `Redis__ConnectionString`
 - `JwtSettings__Secret`
+- `JWT_SECRET` (mapped to `JwtSettings__Secret` in compose)
 - `JwtSettings__Issuer`
 - `JwtSettings__Audience`
 - `JwtSettings__AccessTokenExpirationMinutes`
 - `JwtSettings__RefreshTokenExpirationDays`
 - `Serilog__SeqUrl`
 
-### SMTP env varlar
+### SMTP environment variables
 
 - `Smtp__Enabled`
 - `Smtp__Host`
@@ -70,7 +72,7 @@ docker compose down
 - `Smtp__FromEmail`
 - `Smtp__FromName`
 
-### Web env varlar
+### Web environment variables
 
 - `VITE_API_BASE_URL`
 - `VITE_HUB_CHAT_URL`
@@ -78,75 +80,76 @@ docker compose down
 - `VITE_ENABLE_QA_CONSOLE`
 - `VITE_TOKEN_STORAGE`
 
-## 5. Uretim Oncesi Checklist
+## 5. Pre-Production Checklist
 
-- JWT secret 32 byte ustu rastgele deger mi
-- CORS policy belirli origin listesi ile sinirli mi
-- HTTPS zorunlu ve HSTS aktif mi
-- Postgres yedekleme jobsi tanimli mi
-- Redis persistence veya managed service strategy belirli mi
-- Seq veya APM cikislari merkezi izleme sistemine bagli mi
-- SMTP credentiallari secret manager ile yonetiliyor mu
-- QA panel uretim ortaminda kapali mi (`VITE_ENABLE_QA_CONSOLE=false`)
+- JWT secret is random and at least 32 characters
+- CORS is restricted to explicit trusted origins
+- HTTPS and HSTS are enforced
+- PostgreSQL backup job exists and is tested
+- Redis persistence/managed strategy is defined
+- Seq/APM outputs are integrated into central monitoring
+- SMTP credentials are stored in a secret manager
+- QA panel is disabled (`VITE_ENABLE_QA_CONSOLE=false`)
 
-## 6. Migration ve Veri Yonetimi
+## 6. Migrations and Data Management
 
-- Migration dosyalari `src/ChatApp.Infrastructure/Persistence/Migrations` altindadir.
-- API startup asamasinda seed islemi dener; DB ulasilamazsa uygulama warning logu ile devam eder.
-- Uretimde migrationlarin deploy pipeline icinde kontrollu adimla uygulanmasi onerilir.
+- Migrations are under `src/ChatApp.Infrastructure/Persistence/Migrations`.
+- API startup attempts seed operations; if DB is unavailable, startup logs a warning.
+- In production, run migrations as a controlled deploy step.
 
-Ornek migration komutu (lokal):
+Example migration command (local):
 
 ```bash
 dotnet ef database update --project src/ChatApp.Infrastructure --startup-project src/ChatApp.API
 ```
 
-## 7. Rollback Stratejisi
+## 7. Rollback Strategy
 
-- Uygulama image rollback: onceki tag'e donus
-- DB rollback: migration geri alma yerine backup restore tercih edilmeli
-- Konfig rollback: env var versiyonlama ile geri donus
+- Application rollback: deploy previous image tag
+- Database rollback: prefer backup restore over migration down in incident mode
+- Configuration rollback: use versioned environment sets
 
-## 8. CI/CD Beklentisi
+## 8. CI/CD Baseline
 
-CI pipeline asamalari:
+Current CI pipeline:
 
 1. `dotnet restore`
 2. `dotnet build`
 3. `dotnet test`
-4. Web dependency install
+4. frontend dependency install
 5. Playwright browser install
 6. `npm run test:e2e`
 
-Uretim pipeline'ina eklenmesi onerilen adimlar:
+Recommended production pipeline additions:
 
-- Container image vulnerability scan
-- IaC policy check
-- Smoke test (health + login + message send)
-- Canary veya blue/green rollout
+- Container vulnerability scan
+- IaC policy checks
+- Smoke tests (health + auth + send message)
+- Progressive rollout (canary or blue/green)
 
-## 9. Gozlemleme ve Alarm
+## 9. Monitoring and Alerts
 
-Temel izlenmesi gereken metrikler:
+Core metrics:
 
 - API p95 latency
-- HTTP 5xx ve 429 oranlari
-- SignalR bagli client sayisi
-- Redis baglanti hatalari
-- DB baglanti pool doygunlugu
-- SMTP dispatch fail orani
+- HTTP 5xx and 429 rates
+- active SignalR connections
+- Redis connection failures
+- DB pool saturation
+- SMTP dispatch failure rate
 
-Minimum alarm seti:
+Minimum alert set:
 
-- 5 dakika boyunca 5xx > %2
-- `health/ready` cevap verememe
-- Redis ulasilamazlik
-- JWT validation hatalarinda ani artis
+- 5xx > 2% for 5 minutes
+- readiness endpoint failing
+- Redis unavailable
+- sudden increase in JWT validation errors
 
-## 10. Guvenlik Uyarisi
+## 10. Security Warning
 
-Varsayilan compose ayarlari gelistirme odaklidir. Uretim ortamina ayni ayarlarla cikmak uygun degildir.
-En kritik iki nokta:
+The default compose profile is development-oriented. Do not promote it to production unchanged.
 
-- CORS kisitlamasi
-- Secret yonetimi
+Two mandatory hardening actions:
+
+- strict CORS policy
+- managed secret handling

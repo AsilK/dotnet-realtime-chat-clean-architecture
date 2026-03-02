@@ -18,8 +18,11 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? "Host=localhost;Database=chatapp;Username=chatapp;Password=chatapp123";
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException("Missing required configuration: ConnectionStrings:DefaultConnection");
+        }
 
         services.AddDbContext<ApplicationDbContext>(options =>
         {
@@ -32,9 +35,17 @@ public static class DependencyInjection
         services.Configure<RefreshTokenCleanupOptions>(configuration.GetSection(RefreshTokenCleanupOptions.SectionName));
 
         var jwtSettings = configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>() ?? new JwtSettings();
-        var secret = string.IsNullOrWhiteSpace(jwtSettings.Secret)
-            ? "please-change-this-secret-in-real-environments-1234567890"
-            : jwtSettings.Secret;
+        if (string.IsNullOrWhiteSpace(jwtSettings.Secret))
+        {
+            throw new InvalidOperationException("Missing required configuration: JwtSettings:Secret");
+        }
+
+        if (jwtSettings.Secret.Length < 32)
+        {
+            throw new InvalidOperationException("Invalid configuration: JwtSettings:Secret must be at least 32 characters.");
+        }
+
+        var secret = jwtSettings.Secret;
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
 

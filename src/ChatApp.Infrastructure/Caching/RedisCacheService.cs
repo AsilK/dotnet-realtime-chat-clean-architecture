@@ -24,7 +24,13 @@ public sealed class RedisCacheService : ICacheService
     {
         var db = _connectionMultiplexer.GetDatabase();
         var value = await db.StringGetAsync(key);
-        return value.IsNullOrEmpty ? default : JsonSerializer.Deserialize<T>(value!);
+        if (value.IsNullOrEmpty)
+        {
+            return default;
+        }
+
+        var payload = value.ToString();
+        return JsonSerializer.Deserialize<T>(payload);
     }
 
     public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)

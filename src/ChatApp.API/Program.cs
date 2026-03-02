@@ -20,14 +20,27 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    try
+    const int maxMigrationAttempts = 10;
+
+    for (var attempt = 1; attempt <= maxMigrationAttempts; attempt++)
     {
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await ApplicationDbContextSeed.SeedAsync(dbContext);
-    }
-    catch (Exception ex)
-    {
-        app.Logger.LogWarning(ex, "Database migration/seed skipped because database is not reachable.");
+        try
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            await ApplicationDbContextSeed.SeedAsync(dbContext);
+            break;
+        }
+        catch (Exception ex)
+        {
+            if (attempt == maxMigrationAttempts)
+            {
+                app.Logger.LogWarning(ex, "Database migration/seed skipped after retry budget was exhausted.");
+                break;
+            }
+
+            app.Logger.LogWarning(ex, "Database migration/seed attempt {Attempt}/{MaxAttempts} failed. Retrying...", attempt, maxMigrationAttempts);
+            await Task.Delay(TimeSpan.FromSeconds(2));
+        }
     }
 }
 

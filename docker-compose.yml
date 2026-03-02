@@ -9,6 +9,7 @@ services:
       - VITE_API_BASE_URL=http://localhost:5000
       - VITE_HUB_CHAT_URL=http://localhost:5000/hubs/chat
       - VITE_HUB_NOTIFICATION_URL=http://localhost:5000/hubs/notifications
+      - VITE_ENABLE_QA_CONSOLE=${VITE_ENABLE_QA_CONSOLE:-false}
     depends_on:
       - api
 
@@ -20,7 +21,7 @@ services:
       - "5000:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=chatapp;Username=chatapp;Password=chatapp123
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=chatapp;Username=chatapp;Password=${POSTGRES_PASSWORD:-change-this-postgres-password}
       - Redis__ConnectionString=redis:6379
       - JwtSettings__Secret=${JWT_SECRET:-replace-with-strong-secret-min-32-bytes-123456}
       - JwtSettings__Issuer=ChatApp
@@ -46,7 +47,7 @@ services:
     environment:
       - POSTGRES_DB=chatapp
       - POSTGRES_USER=chatapp
-      - POSTGRES_PASSWORD=chatapp123
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-change-this-postgres-password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

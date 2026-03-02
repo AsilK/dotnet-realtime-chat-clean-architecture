@@ -1,8 +1,8 @@
-﻿# Documentation Index
+# Documentation Index
 
-Bu dizin, ChatApp projesinin teknik dokumanlarini toplu sekilde listeler.
+This directory contains the technical documentation set for ChatApp.
 
-## Core Dokumanlar
+## Core Documents
 
 - [Project README](../README.md)
 - [Architecture](ARCHITECTURE.md)
@@ -14,7 +14,7 @@ Bu dizin, ChatApp projesinin teknik dokumanlarini toplu sekilde listeler.
 - [Testing Guide](TESTING_GUIDE.md)
 - [Contributing](CONTRIBUTING.md)
 
-## Yardimci Dokumanlar
+## Supporting Documents
 
 - [Test Scenarios](TEST_SCENARIOS.md)
 - [Final Audit Notes](FINAL_AUDIT.md)

@@ -16,7 +16,7 @@ public static class ApplicationDbContextSeed
             return;
         }
 
-        // Karmaşık olmayan başlangıç verisi, local geliştirme akışını hızlandırır.
+        // Minimal seed data keeps local bootstrap and integration checks fast.
         var admin = User.Register(new Email("admin@chatapp.local"), new Username("admin"), BCrypt.Net.BCrypt.HashPassword("Admin123!"), "System Admin");
         admin.VerifyEmail();
         admin.AssignRole(UserRole.Admin);

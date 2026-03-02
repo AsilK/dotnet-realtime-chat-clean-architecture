@@ -1,32 +1,25 @@
-﻿# ChatApp
+# ChatApp
 
-ChatApp, .NET 8 uzerinde gelistirilmis gercek zamanli mesajlasma platformudur.
-Proje; Domain merkezli tasarim, CQRS/MediatR pipeline, SignalR realtime ile PostgreSQL ve Redis altyapisini bir araya getirir.
+ChatApp is a production-oriented real-time messaging platform built on .NET 10. The solution combines clean architecture boundaries, CQRS/MediatR workflows, SignalR real-time channels, PostgreSQL persistence, and Redis-backed distributed messaging support.
 
-## Neler Var
+License: [MIT](LICENSE)
 
-- JWT tabanli kimlik dogrulama ve refresh token rotasyonu
-- E-posta dogrulama ve sifre sifirlama akisleri
-- Oda bazli mesajlasma, mesaj duzenleme/silme, arama ve cursor pagination
-- SignalR ile typing, read receipt, room join/leave ve presence eventleri
-- React tabanli test UI ve QA paneli
-- Unit, integration, functional ve E2E test katmanlari
+## Features
 
-## Olculebilir Sonuclar
+- JWT-based authentication with refresh token rotation
+- Email verification and password reset workflows
+- Room-based messaging with edit/delete, search, and cursor pagination
+- SignalR events for typing, read receipts, room join/leave, and user presence
+- React web client with an optional QA diagnostics panel
+- Unit, integration, functional, and end-to-end test layers
 
-- Backend testleri: `12/12` gecti (`dotnet test`)
-- E2E senaryolari: `4/4` gecti (`npm run test:e2e`)
-- Frontend bundle iyilestirmesi:
-  - Onceki tek chunk: `~510.86 kB`
-  - Sonraki en buyuk entry chunk: `226.65 kB` (gzip `74.51 kB`)
+## Measurable Outcomes
 
-## Hedef Kitle
+- Backend test suites passing on .NET 10 (`dotnet test`)
+- End-to-end coverage for core auth and chat flows (`npm run test:e2e`)
+- Frontend code-splitting with a reduced largest entry chunk size (`226.65 kB`, gzip `74.51 kB`)
 
-- Realtime chat altyapisini referans almak isteyen ekipler
-- Clean Architecture ve CQRS yaklasimini pratikte gormek isteyen gelistiriciler
-- API + Web + test otomasyonu tek repoda yonetmek isteyen urun ekipleri
-
-## Dokuman Haritasi
+## Documentation Map
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Technology Stack](docs/TECHNOLOGY_STACK.md)
@@ -36,30 +29,32 @@ Proje; Domain merkezli tasarim, CQRS/MediatR pipeline, SignalR realtime ile Post
 - [Security](docs/SECURITY.md)
 - [Testing Guide](docs/TESTING_GUIDE.md)
 - [Contributing](docs/CONTRIBUTING.md)
-- [ADR Dizini](docs/adr)
+- [ADR Index](docs/adr)
 
-## Hizli Baslangic
+## Quick Start
 
-### 1) Docker ile calistir
+### 1) Start with Docker Compose
+
+Copy `.env.example` to `.env` and replace placeholder secrets before startup.
 
 ```bash
 docker compose up -d --build
 ```
 
-### 2) Servisleri dogrula
+### 2) Validate service health
 
 ```bash
 curl http://localhost:5000/health/live
 curl http://localhost:5000/health/ready
 ```
 
-### 3) UI adresleri
+### 3) Open services
 
 - Web: `http://localhost:5173`
 - API: `http://localhost:5000`
-- Swagger (Development modunda): `http://localhost:5000/swagger`
+- Swagger (Development): `http://localhost:5000/swagger`
 
-## Lokal Gelistirme
+## Local Development
 
 ### API
 
@@ -76,9 +71,9 @@ npm ci
 npm run dev
 ```
 
-## Ortam Degiskenleri
+## Environment Variables
 
-### API odakli
+### API-focused
 
 - `ConnectionStrings__DefaultConnection`
 - `Redis__ConnectionString`
@@ -96,17 +91,29 @@ npm run dev
 - `Smtp__FromEmail`
 - `Smtp__FromName`
 
-### Web odakli
+### Web-focused
 
 - `VITE_API_BASE_URL`
 - `VITE_HUB_CHAT_URL`
 - `VITE_HUB_NOTIFICATION_URL`
 - `VITE_ENABLE_QA_CONSOLE`
-- `VITE_TOKEN_STORAGE` (`session` veya `local`)
+- `VITE_TOKEN_STORAGE` (`session` or `local`)
 
-Not: Uretim ortaminda `JwtSettings__Secret` en az 32 byte ve rastgele uretilmis olmalidir.
+Notes:
 
-## Test Komutlari
+- `JwtSettings__Secret` must be at least 32 characters in production.
+- QA tools are disabled by default (`VITE_ENABLE_QA_CONSOLE=false`).
+- API startup is fail-fast if `ConnectionStrings__DefaultConnection` or `JwtSettings__Secret` is missing.
+
+## Security and Public Repository Readiness
+
+- CI includes automated secret scanning via the `security-scan` workflow (gitleaks).
+- Repository files contain only non-production placeholder values.
+- Before production deployment:
+  - set strong values for `POSTGRES_PASSWORD` and `JWT_SECRET`
+  - keep `VITE_ENABLE_QA_CONSOLE=false`
+
+## Validation Commands
 
 ### Backend
 
@@ -122,26 +129,26 @@ cd src/ChatApp.Web
 npm run build
 ```
 
-### E2E (Docker stack ile)
+### End-to-End (with Docker stack)
 
 ```bash
 cd src/ChatApp.Web
 npm run test:e2e
 ```
 
-## Dizin Yapisi
+## Repository Structure
 
-- `src/ChatApp.Domain`: Entity, enum, domain event ve value object katmani
-- `src/ChatApp.Application`: Use-case odakli command/query handler ve pipeline behavior katmani
-- `src/ChatApp.Infrastructure`: EF Core, repository, JWT, Redis, SMTP ve hosted service katmani
-- `src/ChatApp.API`: Controller, hub, middleware ve composition root
-- `src/ChatApp.Web`: React tabanli web istemcisi ve QA paneli
-- `tests/*`: Unit, integration ve functional test projeleri
-- `docs/*`: Mimari, guvenlik, deploy ve operasyon dokumanlari
+- `src/ChatApp.Domain`: entities, value objects, domain events, enums
+- `src/ChatApp.Application`: command/query handlers, DTOs, pipeline behaviors
+- `src/ChatApp.Infrastructure`: EF Core, repositories, JWT, Redis, SMTP, hosted services
+- `src/ChatApp.API`: controllers, hubs, middleware, composition root
+- `src/ChatApp.Web`: React application and QA tooling
+- `tests/*`: unit, integration, and functional test projects
+- `docs/*`: architecture, security, deployment, and operations documentation
 
-## Operasyonel Not
+## Operational Note
 
-Stack'i kapatmak icin:
+To stop the stack:
 
 ```bash
 docker compose down

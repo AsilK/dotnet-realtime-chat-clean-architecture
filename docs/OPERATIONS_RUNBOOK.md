@@ -1,147 +1,147 @@
-﻿# Operations Runbook
+# Operations Runbook
 
-Bu runbook, ChatApp sisteminin gunluk operasyonunda izleme, sorun giderme ve mudahele adimlarini tanimlar.
+This runbook defines daily operations, troubleshooting, and incident response for ChatApp.
 
-## 1. Hizli Komutlar
+## 1. Quick Commands
 
-### Stack baslat
+### Start stack
 
 ```bash
 docker compose up -d --build
 ```
 
-### Stack durdur
+### Stop stack
 
 ```bash
 docker compose down
 ```
 
-### Servis durumlari
+### Service status
 
 ```bash
 docker compose ps
 ```
 
-### API loglari
+### API logs
 
 ```bash
 docker compose logs api --tail 200
 ```
 
-### Web loglari
+### Web logs
 
 ```bash
 docker compose logs web --tail 200
 ```
 
-## 2. Health Kontrolleri
+## 2. Health Checks
 
 - Liveness: `GET /health/live`
 - Readiness: `GET /health/ready`
 
-Beklenen durum:
+Expected behavior:
 
-- HTTP 200
-- Readiness hatalarinda DB/Redis baglantilari kontrol edilmelidir.
+- HTTP 200 for both
+- On readiness failure, check DB/Redis dependencies first
 
-## 3. Kritik Gozlem Noktalari
+## 3. Key Observability Signals
 
 ### API
 
-- 5xx oraninda ani artis
-- 429 oraninda artis
-- Auth endpoint hata orani
+- sudden increase in 5xx rates
+- sudden increase in 429 rates
+- auth endpoint error spikes
 
 ### Realtime
 
-- Hub connect/negotiate hatalari
-- Reconnect dongulerinin artmasi
+- hub negotiate/connect failures
+- reconnection loops increasing
 
-### Veri
+### Data
 
-- PostgreSQL baglanti gecikmesi
-- Redis connection drop
+- PostgreSQL latency or connection exhaustion
+- Redis disconnects/timeouts
 
-### Background servisler
+### Background Services
 
-- Email dispatch fail ve retry sayisi
-- Refresh token cleanup calisma araligi
+- email dispatch retries/failures
+- refresh-token cleanup execution gaps
 
-## 4. Sik Karsilasilan Sorunlar
+## 4. Common Failure Scenarios
 
-### Sorun: `POST /api/chatrooms` 400
+### Issue: `POST /api/chatrooms` returns 400
 
-Kontrol:
+Checks:
 
-- Request body'si `roomType` enum degeri dogru mu (1/2/3)
-- `memberIds` alaninda gecerli GUID formatinda degerler var mi
-- Response body'sinde `error` veya `details[]` mesaji ne donuyor
+- verify `roomType` enum value (1/2/3)
+- validate GUID format in `memberIds`
+- inspect response `error` or `details[]`
 
-### Sorun: SignalR `stopped during negotiation`
+### Issue: SignalR `stopped during negotiation`
 
-Kontrol:
+Checks:
 
-- API ayakta mi (`/health/live`)
-- Token suresi dolmus mu
-- Tarayici gelistirme modunda cift mount etkisi var mi
-- Reverse proxy websocket upgrade headerlari dogru mu
+- API health (`/health/live`)
+- token validity and expiration
+- development double-mount side effects in frontend
+- reverse proxy websocket upgrade headers
 
-### Sorun: 401 artis
+### Issue: increase in 401 responses
 
-Kontrol:
+Checks:
 
-- `JwtSettings__Secret`, `Issuer`, `Audience` uyumu
-- Saat senkronizasyonu (clock skew disi drift)
-- Refresh token store temizligi
+- `JwtSettings__Secret`, issuer, and audience consistency
+- host clock drift beyond configured skew
+- refresh token storage/cleanup state
 
-### Sorun: 429 artis
+### Issue: increase in 429 responses
 
-Kontrol:
+Checks:
 
-- Auth brute-force veya test trafi gi var mi
-- API rate limit partition key kaynaklari (user/ip) incelenmeli
+- brute-force or synthetic test traffic
+- rate limit partition behavior (user/IP)
 
-## 5. Loglama ve Inceleme
+## 5. Logging and Investigation
 
-- Serilog console ve Seq sink aktif
-- Seq default adresi compose ortaminda `http://localhost:5341`
+- Serilog console and Seq sinks are enabled
+- default Seq URL in compose: `http://localhost:5341`
 
-Operasyonel olarak aranacak log patternleri:
+Useful log patterns:
 
 - `Unhandled exception`
 - `Long running request`
 - `Rate limit exceeded`
 - `Database migration/seed skipped`
 
-## 6. Incident Mudahele Akisi
+## 6. Incident Response Flow
 
-1. Etkiyi sinirla: hatali deploy varsa onceki image tag'e don
-2. Saglik kontrolu: live/ready endpointleri
-3. Veri durumu: DB ve Redis baglanti durumu
-4. Koken neden analizi: log + son deploy farki
-5. Gecici onlem: trafik kisma veya feature disable
-6. Kalici cozum: patch + test + dokuman guncellemesi
+1. Contain impact (rollback or traffic shaping)
+2. Verify live/readiness endpoints
+3. Check DB and Redis health
+4. Run root-cause analysis from logs and recent changes
+5. Apply temporary mitigation
+6. Ship permanent fix with tests and doc updates
 
-## 7. Backup ve Recovery
+## 7. Backup and Recovery
 
-Minimum beklenti:
+Minimum baseline:
 
-- PostgreSQL periyodik backup
-- Backup dogrulama (restore test)
-- Recovery RTO/RPO hedeflerinin tanimli olmasi
+- periodic PostgreSQL backups
+- backup restore drill validation
+- documented RTO/RPO targets
 
-## 8. Kapasite Planlama Baslangic Metrikleri
+## 8. Capacity Planning Baseline Metrics
 
 - API p95 latency
-- Dakikadaki request sayisi
-- Hub active connection sayisi
-- Mesaj yazma/okuma throughput'u
-- Redis memory kullanimi
+- request throughput per minute
+- active SignalR connections
+- message write/read throughput
+- Redis memory utilization
 
-## 9. Uretim Ortami Ek Kontroller
+## 9. Production Environment Controls
 
-- CORS explicit whitelist
-- TLS zorunlulugu
-- Secret manager entegrasyonu
-- Alert routing (on-call)
-- Runbook sahibi ve guncelleme periyodu
+- explicit CORS allowlist
+- enforced TLS
+- managed secret integration
+- on-call alert routing
+- named runbook ownership and review cadence

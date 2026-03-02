@@ -1,43 +1,43 @@
-﻿# Testing Guide
+# Testing Guide
 
-Bu dokuman, projedeki test katmanlarini, komutlarini ve kabul kriterlerini ozetler.
+This document describes the test layers, commands, and acceptance criteria for the project.
 
-## 1. Test Piramidi
+## 1. Test Pyramid
 
 ### Unit Tests
 
-- Konum:
+- Locations:
   - `tests/ChatApp.Domain.UnitTests`
   - `tests/ChatApp.Application.UnitTests`
-- Hedef:
-  - Domain kurallari
-  - Validation ve handler davranislari
+- Scope:
+  - domain rules
+  - validation and handler behavior
 
 ### Integration Tests
 
-- Konum: `tests/ChatApp.Infrastructure.IntegrationTests`
-- Hedef:
-  - Infrastructure servisleri
-  - Repository ve bagimli altyapi davranislari
+- Location: `tests/ChatApp.Infrastructure.IntegrationTests`
+- Scope:
+  - infrastructure services
+  - repository and dependent infrastructure behavior
 
 ### Functional Tests
 
-- Konum: `tests/ChatApp.API.FunctionalTests`
-- Hedef:
-  - API smoke ve temel HTTP akis dogrulamalari
+- Location: `tests/ChatApp.API.FunctionalTests`
+- Scope:
+  - API smoke tests and baseline HTTP behavior
 
-### E2E Tests (Web)
+### End-to-End Tests (Web)
 
-- Konum: `src/ChatApp.Web/tests/e2e`
-- Hedef:
-  - Register/Login/Logout
-  - Room + message akislari
-  - Realtime typing/presence/read
-  - 401 -> refresh -> continue
+- Location: `src/ChatApp.Web/tests/e2e`
+- Scope:
+  - register/login/logout
+  - room and message workflows
+  - real-time typing/presence/read events
+  - 401 -> refresh -> continue flow
 
-## 2. Komut Seti
+## 2. Command Set
 
-### Backend build + test
+### Backend build and tests
 
 ```bash
 dotnet build
@@ -50,66 +50,66 @@ dotnet test
 powershell -ExecutionPolicy Bypass -File .\scripts\test-coverage.ps1
 ```
 
-### Web build
+### Frontend build
 
 ```bash
 cd src/ChatApp.Web
 npm run build
 ```
 
-### E2E (docker stack ile)
+### E2E (with Docker stack lifecycle)
 
 ```bash
 cd src/ChatApp.Web
 npm run test:e2e
 ```
 
-### E2E (stack zaten ayaktaysa)
+### E2E (stack already running)
 
 ```bash
 cd src/ChatApp.Web
 npm run test:e2e:local
 ```
 
-## 3. CI Davranisi
+## 3. CI Behavior
 
-CI pipeline sirasi:
+Pipeline order:
 
 1. .NET restore
 2. .NET build
 3. .NET test
-4. Web dependency install
+4. frontend dependency install
 5. Playwright browser install
-6. E2E test
+6. E2E tests
 
-Beklenti: PR merge oncesi tum adimlar yesil olmalidir.
+Expectation: all steps pass before PR merge.
 
-## 4. Test Verisi ve Izolasyon
+## 4. Test Data and Isolation
 
-- Unit testler izole, deterministic olmalidir.
-- Integration/functional testlerde test ortami bagimliliklari acik tanimli olmalidir.
-- E2E testler kendine ait kullanici/oda verisi olusturup temizlemelidir.
+- Unit tests should remain isolated and deterministic.
+- Integration/functional tests should define external dependencies explicitly.
+- E2E tests should create and clean up their own data where possible.
 
-## 5. Realtime Test Onerileri
+## 5. Realtime Test Recommendations
 
-- En az iki bagimsiz session ile event dogrulamasi yap
-- `UserTyping`, `UserJoinedRoom`, `MessageRead` eventlerini ayrica izle
-- Hub reconnect sonrasinda room membership davranisini kontrol et
+- Validate with at least two independent sessions.
+- Observe `UserTyping`, `UserJoinedRoom`, and `MessageRead` events directly.
+- Verify room membership behavior after reconnect.
 
-## 6. Hata Yakalama Stratejisi
+## 6. Failure Diagnostics Strategy
 
-- E2E fail oldugunda screenshot + video artifactleri incelenmeli
-- API seviyesinde donen `isSuccess/error` payloadu dogrudan assert edilmelidir
-- Validation hatalari `details[]` listesiyle birlikte test edilmelidir
+- On E2E failure, inspect screenshots/videos/artifacts.
+- Assert API-level `isSuccess/error` payloads directly.
+- Validate `details[]` for expected validation failure content.
 
-## 7. Test Kabul Kriterleri
+## 7. Test Acceptance Criteria
 
-- Yeni feature minimum bir test katmaninda kapsanmali
-- Kritik auth/permission degisikligi unit + functional test icermeli
-- UI akisi degisikligi en az bir E2E senaryosuna yansitilmali
+- Each new feature must be covered by at least one test layer.
+- Critical auth/permission changes require unit + functional coverage.
+- UI flow changes should be reflected in at least one E2E scenario.
 
-## 8. Stabilite Ic in Oneriler
+## 8. Stability Recommendations
 
-- Zaman bagimli testlerde sabit saat veya tolerans kullan
-- Asenkron event testlerinde deterministic wait/condition stratejisi kullan
-- Paralel testte paylasilan dosya ve port kilitlerini engelle
+- For time-dependent tests, use fixed clock inputs or bounded tolerances.
+- For async event tests, rely on deterministic wait conditions.
+- Prevent shared file/port contention when running tests in parallel.

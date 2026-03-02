@@ -1,58 +1,59 @@
-# Test Senaryolari
+# Test Scenarios
 
-Bu dokuman, UI + API + Hub akislari icin hizli manuel/E2E kontrol listesi sunar.
+This checklist provides fast manual and E2E validation paths across UI, API, and SignalR workflows.
 
 ## Happy Path
 
 1. Register -> Login -> Logout
-   - `/register` formu ile yeni kullanici olustur.
-   - Otomatik `/chat` yonlendirmesi ve kullanici badge gorunsun.
-   - `Sign Out` ile `/login` sayfasina donsun.
+   - Create a user via `/register`.
+   - Verify automatic redirect to `/chat` and user badge visibility.
+   - Click `Sign Out` and confirm redirect to `/login`.
 
-2. Oda olustur -> Odaya gir -> Mesaj gonder
-   - `/chat` sayfasinda oda olustur.
-   - Odayi secip `Join` yap.
-   - Mesaj gonder, listede gorunsun.
+2. Create Room -> Join Room -> Send Message
+   - Create a room from `/chat`.
+   - Select room and click `Join`.
+   - Send a message and verify list rendering.
 
-3. Mesaj duzenle/sil
-   - Kendi mesajinda `Edit` -> `Save`.
-   - `Delete` sonrasinda mesaj `[deleted]` olarak gorunsun.
+3. Edit/Delete Message
+   - Edit your own message and save.
+   - Delete the message and verify `[deleted]` marker.
 
-4. Realtime typing/presence/read (2 session)
-   - A ve B sessionlari ayri kullanici ile baglansin.
-   - B typing gonderdiginde A ekraninda typing indicator gorunsun.
-   - B `Mark Read` yaptiginda A ekraninda `Read by` bilgisi guncellensin.
+4. Realtime typing/presence/read (2 sessions)
+   - Open sessions A and B with different users.
+   - Trigger typing in B and verify indicator in A.
+   - Trigger read in B and verify read status update in A.
 
 5. QA panel API/Hub invoke
-   - `/qa` uzerinde API Playground ile en az 1 endpoint cagir.
-   - Hub Playground ile en az 1 chat method invoke et.
-   - Event Monitor uzerinde event logunu gor.
+   - Use `/qa` API Playground to call at least one endpoint.
+   - Use Hub Playground to invoke at least one chat hub method.
+   - Confirm event logs in Event Monitor.
 
 ## Failure Path
 
-1. Gecersiz login
-   - Yanlis sifre ile login dene.
-   - Hata mesaji gorunsun, session acilmasin.
+1. Invalid login
+   - Attempt login with incorrect password.
+   - Verify error message and no authenticated session.
 
 2. Token refresh failure
-   - Gecersiz/expired refresh token ile protected route ac.
-   - Oturum temizlenip `/login` sayfasina yonlendirilsin.
+   - Use invalid/expired refresh token on protected route.
+   - Verify session clear and redirect to `/login`.
 
-3. Rate limit davranisi
-   - `/qa` Rate/Load panelinden auth burst test calistir.
-   - 429 olusursa sayim ekranda gorunsun.
+3. Rate limit behavior
+   - Run auth burst test from `/qa` Rate/Load panel.
+   - Verify 429 counts and summary reporting.
 
-4. Hub baglanti kopmasi
-   - Session hub baglantisini kapat.
-   - UI state `disconnected`/`reconnecting` olarak degissin.
+4. Hub disconnect
+   - Force-close the hub session.
+   - Verify UI state transitions to `disconnected` / `reconnecting`.
 
-5. Gezersiz API body
-   - API Playground'da hatali JSON/body gonder.
-   - Hata durum kodu ve response body gorunsun.
+5. Invalid API payload
+   - Send malformed JSON/body from API Playground.
+   - Verify status code and error response body.
 
-## Hedef Sure
+## Time Target
 
-Yeni gelen bir gelistirici bu senaryolari kullanarak 15-20 dakika icinde:
-- Ortami ayaga kaldirabilmeli
-- Temel akislarin calistigini dogrulayabilmeli
-- Hata/rate-limit/retry davranisini gozlemleyebilmelidir
+A new engineer should be able to run this checklist in 15-20 minutes to:
+
+- boot the full environment
+- confirm core workflows
+- observe failure/rate-limit/retry behavior

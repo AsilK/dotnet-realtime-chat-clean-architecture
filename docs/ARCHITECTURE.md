@@ -1,65 +1,65 @@
-﻿# Architecture
+# Architecture
 
-Bu dokuman, ChatApp sisteminin mimari sinirlarini, veri akislarini ve runtime davranisini aciklar.
+This document describes ChatApp system boundaries, data flows, and runtime behavior.
 
-## 1. Mimari Hedefler
+## 1. Architectural Goals
 
-- Is kurallarini UI ve altyapi detaylarindan izole tutmak
-- Realtime chat akislarini yatay olcekte calisabilir hale getirmek
-- Test edilebilir, degisiklik etkisi tahmin edilebilir bir kod tabani olusturmak
-- Operasyonel gozetim ve hata ayiklama kabiliyetini yuksek tutmak
+- Keep business rules isolated from UI and infrastructure details
+- Support horizontal scaling for real-time chat workloads
+- Maintain high testability and predictable change impact
+- Preserve strong operational observability and debugging capabilities
 
-## 2. Katmanlar ve Sorumluluklar
+## 2. Layers and Responsibilities
 
 ### Domain (`src/ChatApp.Domain`)
 
-- Entity modelleri: `User`, `ChatRoom`, `Message`, `RefreshToken`, `UserBlock`
-- Value objectler: `Email`, `Username`
-- Domain eventler: `MessageSentEvent`, `UserJoinedRoomEvent`, `UserLeftRoomEvent`
-- Is kurali ihlallerinde `DomainException`
+- Entities: `User`, `ChatRoom`, `Message`, `RefreshToken`, `UserBlock`
+- Value objects: `Email`, `Username`
+- Domain events: `MessageSentEvent`, `UserJoinedRoomEvent`, `UserLeftRoomEvent`
+- `DomainException` for business rule violations
 
 ### Application (`src/ChatApp.Application`)
 
-- Use-case odakli command/query handlerlari
-- MediatR pipeline behaviorlari:
+- Use-case oriented command/query handlers
+- MediatR pipeline behaviors:
   - `ValidationBehavior`
   - `LoggingBehavior`
   - `PerformanceBehavior`
   - `UnhandledExceptionBehavior`
-- DTO modelleri ve mapping profilleri
-- Dis bagimliliklara karsi interface tanimlari
+- DTO models and mapping profiles
+- Interfaces abstracting infrastructure dependencies
 
 ### Infrastructure (`src/ChatApp.Infrastructure`)
 
-- EF Core `ApplicationDbContext` ve migrationlar
-- Repository + Unit of Work implementasyonlari
-- JWT token servisi ve password hasher
-- Redis tabanli cache servisi
-- SMTP e-posta gonderici ve kuyruk tabanli background dispatch
+- EF Core `ApplicationDbContext` and migrations
+- Repository + Unit of Work implementations
+- JWT token services and password hashing
+- Redis-based cache service
+- SMTP sender and queue-backed background email dispatch
 - Refresh token cleanup background service
 
 ### API (`src/ChatApp.API`)
 
-- REST controller endpointleri
-- SignalR hub endpointleri (`/hubs/chat`, `/hubs/notifications`)
-- Middleware zinciri:
-  - Exception handling
-  - Security headers
+- REST controller endpoints
+- SignalR hubs (`/hubs/chat`, `/hubs/notifications`)
+- Middleware pipeline:
+  - exception handling
+  - security headers
   - Serilog request logging
   - CORS
-  - Rate limiter
-  - Authentication/Authorization
-- Health check endpointleri
+  - rate limiting
+  - authentication and authorization
+- Health endpoints
 
 ### Web (`src/ChatApp.Web`)
 
-- React + TypeScript tabanli istemci
-- Route guard ve auth state yonetimi
-- Axios interceptor ile 401 refresh akisi
-- SignalR client ve reconnect stratejisi
-- QA paneli ve multi-session test UI
+- React + TypeScript application
+- Route guards and auth state management
+- Axios interceptors for 401/refresh flows
+- SignalR client with reconnect strategy
+- QA panel and multi-session diagnostics UI
 
-## 3. Bagimlilik Yonleri
+## 3. Dependency Direction
 
 ```mermaid
 flowchart LR
@@ -71,9 +71,9 @@ flowchart LR
   Infrastructure --> Domain
 ```
 
-Temel ilke: Domain katmani dis katmanlari bilmez. Is kurali, yukari katmanlardan cagrilir ama ters yonlu bagimlilik olusturmaz.
+Core principle: the Domain layer has no dependency on outer layers.
 
-## 4. Request Isleme Akisi
+## 4. HTTP Request Processing Flow
 
 ```mermaid
 sequenceDiagram
@@ -84,17 +84,17 @@ sequenceDiagram
   participant R as Repository/UoW
   participant D as PostgreSQL
 
-  C->>A: HTTP Request
+  C->>A: HTTP request
   A->>M: Send(command/query)
   M->>M: Validation + Logging + Performance
   M->>H: Dispatch
   H->>R: Read/Write
   R->>D: SQL
   H-->>A: Result<T>
-  A-->>C: JSON Response
+  A-->>C: JSON response
 ```
 
-## 5. Realtime Akis
+## 5. Real-Time Flow
 
 ```mermaid
 sequenceDiagram
@@ -107,18 +107,18 @@ sequenceDiagram
   W->>Hub: JoinRoom(roomId)
   W->>Hub: SendTypingIndicator(roomId)
   Hub-->>W: UserTyping event
-  Hub->>App: MarkMessageAsRead command (gerektiginde)
-  Hub->>Redis: Pub/Sub replicate
+  Hub->>App: MarkMessageAsRead command (when required)
+  Hub->>Redis: Pub/Sub replication
 ```
 
-Notlar:
+Notes:
 
-- SignalR baglantisi JWT tokeni query string (`access_token`) ile alabilir.
-- Hub metodlarinda ek bir `MessageRateLimitingHubFilter` uygulanir.
+- SignalR can receive JWT via query string (`access_token`).
+- Hub methods are protected by `MessageRateLimitingHubFilter`.
 
-## 6. Veri Modeli Ozeti
+## 6. Data Model Overview
 
-Temel tablolar:
+Primary tables:
 
 - `Users`
 - `ChatRooms`
@@ -128,49 +128,49 @@ Temel tablolar:
 - `RefreshTokens`
 - `UserBlocks`
 
-Performans odakli noktalar:
+Performance-focused indexes:
 
-- `Messages(ChatRoomId, CreatedAtUtc)` indeksi
-- `Messages(Content)` trigram indeksi
-- `Users(DisplayName)` trigram indeksi
-- `ChatRoomMembers(UserId, IsBanned, ChatRoomId)` lookup odakli indeks
+- `Messages(ChatRoomId, CreatedAtUtc)`
+- `Messages(Content)` trigram index
+- `Users(DisplayName)` trigram index
+- `ChatRoomMembers(UserId, IsBanned, ChatRoomId)` lookup index
 
-## 7. Cross-Cutting Politikalar
+## 7. Cross-Cutting Policies
 
-### Kimlik dogrulama ve yetkilendirme
+### Authentication and Authorization
 
-- JWT Bearer ile API + Hub yetkilendirmesi
-- Access token kisa omurlu, refresh token daha uzun omurlu
-- Refresh tokenlar hashlenerek saklanir
+- JWT Bearer authentication for API and hubs
+- Short-lived access tokens and longer-lived refresh tokens
+- Refresh tokens stored hashed
 
-### Rate limiting
+### Rate Limiting
 
-- Auth endpoint policy: 5 istek/dakika
-- API endpoint policy: 100 istek/dakika
-- Hub metotlari icin ek memory-cache tabanli sinirlama
+- Auth policy: 5 requests/minute
+- API policy: 100 requests/minute
+- Additional memory-cache limits on critical hub methods
 
-### Hata yonetimi
+### Error Handling
 
-- Validation hatalari: HTTP 400 + detay listesi
-- Beklenmeyen hatalar: HTTP 500 + genel hata mesaji
-- Yapilandirilmis loglar Serilog ile tutulur
+- Validation errors: HTTP 400 + details
+- Unexpected errors: HTTP 500 + generic message
+- Structured logs via Serilog
 
-## 8. Olceklenebilirlik Yaklasimi
+## 8. Scalability Approach
 
-- API stateless olarak olceklendirilebilir
-- SignalR instance'lari Redis backplane ile senkronize event dagitir
-- DB tarafinda pagination ve indeks kullanimi ile kontrol edilir
-- Hosted service'ler sayesinde e-posta dispatch ve token cleanup API request yolundan ayrilir
+- Stateless API instances can scale horizontally
+- SignalR multi-instance events synchronized through Redis backplane
+- Query load controlled with pagination and index discipline
+- Hosted services offload email dispatch and token cleanup from request path
 
-## 9. Bilinen Riskler ve Trade-offlar
+## 9. Known Risks and Trade-offs
 
-- CORS policy su an genis (`SetIsOriginAllowed(_ => true)` + credentials). Uretimde daraltilmalidir.
-- Container icinde data protection key persistence varsayilan durumda kalici degil.
-- QA paneli guclu test fonksiyonlari saglar; ortam bazli acma/kapama disiplini zorunludur.
+- Current CORS setup is permissive and must be restricted in production
+- Data protection key persistence in containers is not fully hardened
+- QA panel is powerful and must remain environment-gated
 
-## 10. Mimariyi Gelistirme Onerileri
+## 10. Recommended Improvements
 
-- CORS whitelist ve environment bazli policy farklastirma
-- Read model agir sorgular icin projection/cache stratejisi
-- Outbox/Inbox ile event teslim garantisinin guclendirilmesi
-- Security header setinin CSP ve HSTS ile genisletilmesi
+- Introduce strict CORS origin allowlists by environment
+- Add read-model/caching strategy for heavy query workloads
+- Consider Outbox/Inbox patterns for stronger event delivery guarantees
+- Expand security headers with CSP and HSTS for production

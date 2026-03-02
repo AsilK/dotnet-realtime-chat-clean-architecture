@@ -1,16 +1,16 @@
-﻿# API Documentation
+# API Documentation
 
-Bu dokuman, REST endpointlerini ve SignalR hub sozlesmelerini operasyonel kullanim odagi ile aciklar.
+This document describes REST endpoints and SignalR hub contracts for operational and integration use.
 
-## 1. Genel Bilgiler
+## 1. General Information
 
 - Base URL: `http://localhost:5000`
-- Auth tipi: `Bearer <access_token>`
+- Authentication: `Bearer <access_token>`
 - Content-Type: `application/json`
 
-## 2. Standart Response Formati
+## 2. Standard Response Shape
 
-### Basarili cevap (value donen endpoint)
+### Success (value-returning endpoint)
 
 ```json
 {
@@ -20,7 +20,7 @@ Bu dokuman, REST endpointlerini ve SignalR hub sozlesmelerini operasyonel kullan
 }
 ```
 
-### Basarili cevap (value donmeyen endpoint)
+### Success (no value payload)
 
 ```json
 {
@@ -29,7 +29,7 @@ Bu dokuman, REST endpointlerini ve SignalR hub sozlesmelerini operasyonel kullan
 }
 ```
 
-### Is kurali / uygulama hatasi
+### Business/application error
 
 ```json
 {
@@ -39,7 +39,7 @@ Bu dokuman, REST endpointlerini ve SignalR hub sozlesmelerini operasyonel kullan
 }
 ```
 
-### Validation hatasi (middleware)
+### Validation error (middleware)
 
 ```json
 {
@@ -50,21 +50,21 @@ Bu dokuman, REST endpointlerini ve SignalR hub sozlesmelerini operasyonel kullan
 }
 ```
 
-## 3. Kimlik Dogrulama Endpointleri (`/api/auth`)
+## 3. Authentication Endpoints (`/api/auth`)
 
-| Method | Path | Auth | Rate Limit | Aciklama |
+| Method | Path | Auth | Rate Limit | Description |
 | --- | --- | --- | --- | --- |
-| POST | `/register` | Hayir | `auth` | Yeni kullanici kaydi |
-| POST | `/login` | Hayir | `auth` | Email/username ile giris |
-| POST | `/refresh` | Hayir | `auth` | Refresh token ile yeni token cifti |
-| POST | `/logout` | Evet | API policy | Refresh token iptali |
-| GET | `/me` | Evet | API policy | Oturumdaki kullanici bilgisi |
-| POST | `/email-verification/request` | Hayir | `auth` | Dogrulama emaili talebi |
-| POST | `/email-verification/confirm` | Hayir | `auth` | E-posta dogrulama |
-| POST | `/password-reset/request` | Hayir | `auth` | Sifre reset talebi |
-| POST | `/password-reset/confirm` | Hayir | `auth` | Sifre reset onayi |
+| POST | `/register` | No | `auth` | Register a new user |
+| POST | `/login` | No | `auth` | Login via email or username |
+| POST | `/refresh` | No | `auth` | Rotate token pair using refresh token |
+| POST | `/logout` | Yes | `api` | Revoke refresh token |
+| GET | `/me` | Yes | `api` | Get current authenticated user |
+| POST | `/email-verification/request` | No | `auth` | Request verification email |
+| POST | `/email-verification/confirm` | No | `auth` | Confirm email verification |
+| POST | `/password-reset/request` | No | `auth` | Request password reset |
+| POST | `/password-reset/confirm` | No | `auth` | Confirm password reset |
 
-### Ornek: Register Request
+### Example Register Request
 
 ```json
 {
@@ -75,7 +75,7 @@ Bu dokuman, REST endpointlerini ve SignalR hub sozlesmelerini operasyonel kullan
 }
 ```
 
-### Ornek: AuthResponseDto (`value`)
+### Example `AuthResponseDto` (`value`)
 
 ```json
 {
@@ -90,17 +90,17 @@ Bu dokuman, REST endpointlerini ve SignalR hub sozlesmelerini operasyonel kullan
 }
 ```
 
-## 4. Chat Room Endpointleri (`/api/chatrooms`)
+## 4. Chat Room Endpoints (`/api/chatrooms`)
 
-| Method | Path | Auth | Aciklama |
+| Method | Path | Auth | Description |
 | --- | --- | --- | --- |
-| POST | `/` | Evet | Oda olustur |
-| GET | `/` | Evet | Kullanicinin odalari (pagination) |
-| GET | `/{roomId}` | Evet | Oda detayini getir |
-| GET | `/{roomId}/members` | Evet | Oda uyelerini getir |
-| POST | `/{roomId}/join` | Evet | Odaya katil |
-| POST | `/{roomId}/leave` | Evet | Odadan ayril |
-| DELETE | `/{roomId}` | Evet | Odayi sil |
+| POST | `/` | Yes | Create room |
+| GET | `/` | Yes | List current user rooms (paginated) |
+| GET | `/{roomId}` | Yes | Get room detail |
+| GET | `/{roomId}/members` | Yes | List room members |
+| POST | `/{roomId}/join` | Yes | Join room |
+| POST | `/{roomId}/leave` | Yes | Leave room |
+| DELETE | `/{roomId}` | Yes | Delete room |
 
 ### Create Room Request
 
@@ -115,21 +115,21 @@ Bu dokuman, REST endpointlerini ve SignalR hub sozlesmelerini operasyonel kullan
 }
 ```
 
-`roomType` degerleri:
+`roomType` values:
 
 - `1`: Public
 - `2`: Private
 - `3`: Direct
 
-## 5. Message Endpointleri (`/api/messages`)
+## 5. Message Endpoints (`/api/messages`)
 
-| Method | Path | Auth | Aciklama |
+| Method | Path | Auth | Description |
 | --- | --- | --- | --- |
-| POST | `/` | Evet | Mesaj gonder |
-| PUT | `/{messageId}` | Evet | Mesaj duzenle |
-| DELETE | `/{messageId}` | Evet | Mesaj sil |
-| GET | `/room/{roomId}` | Evet | Oda mesajlarini getir |
-| GET | `/room/{roomId}/search` | Evet | Oda icinde mesaj ara |
+| POST | `/` | Yes | Send message |
+| PUT | `/{messageId}` | Yes | Edit message |
+| DELETE | `/{messageId}` | Yes | Delete message |
+| GET | `/room/{roomId}` | Yes | List room messages |
+| GET | `/room/{roomId}/search` | Yes | Search messages in room |
 
 ### Send Message Request
 
@@ -142,40 +142,40 @@ Bu dokuman, REST endpointlerini ve SignalR hub sozlesmelerini operasyonel kullan
 }
 ```
 
-`type` degerleri `MessageType` enum'una gore belirlenir.
+`type` values follow the `MessageType` enum.
 
-### Pagination Query Parametreleri
+### Pagination Query Parameters
 
 - `pageNumber` (default: 1)
-- `pageSize` (default endpoint bazli 20/50)
-- `beforeMessageId` (cursor tabanli eski mesaj cekimi)
+- `pageSize` (endpoint defaults: 20 or 50)
+- `beforeMessageId` (cursor for backward message loading)
 
-## 6. User Endpointleri (`/api/users`)
+## 6. User Endpoints (`/api/users`)
 
-| Method | Path | Auth | Aciklama |
+| Method | Path | Auth | Description |
 | --- | --- | --- | --- |
-| GET | `/{userId}` | Evet | Kullanici profilini getir |
-| GET | `/search` | Evet | Kullanici ara |
-| PUT | `/me/profile` | Evet | Profil guncelle |
-| PUT | `/me/password` | Evet | Sifre degistir |
-| POST | `/me/status` | Evet | Online/offline durum guncelle |
-| POST | `/block/{targetUserId}` | Evet | Kullanici engelle |
-| DELETE | `/block/{targetUserId}` | Evet | Engeli kaldir |
+| GET | `/{userId}` | Yes | Get user profile |
+| GET | `/search` | Yes | Search users |
+| PUT | `/me/profile` | Yes | Update profile |
+| PUT | `/me/password` | Yes | Change password |
+| POST | `/me/status` | Yes | Update online/offline status |
+| POST | `/block/{targetUserId}` | Yes | Block user |
+| DELETE | `/block/{targetUserId}` | Yes | Unblock user |
 
-## 7. SignalR Hub Sozlesmeleri
+## 7. SignalR Hub Contracts
 
 ### Chat Hub: `/hubs/chat`
 
-JWT token, SignalR negotiate asamasinda query string `access_token` ile iletilebilir.
+JWT can be supplied during negotiation via query string `access_token`.
 
-#### Client -> Server metodlari
+#### Client -> Server methods
 
 - `JoinRoom(roomId)`
 - `LeaveRoom(roomId)`
 - `SendTypingIndicator(roomId)`
 - `MarkMessageAsRead(messageId, roomId?)`
 
-#### Server -> Client eventleri
+#### Server -> Client events
 
 - `ReceiveMessage(message)`
 - `UserStatusChanged(userId, status)`
@@ -188,20 +188,20 @@ JWT token, SignalR negotiate asamasinda query string `access_token` ile iletileb
 
 - `JoinNotifications()`
 
-## 8. Health Endpointleri
+## 8. Health Endpoints
 
 - `GET /health/live`
 - `GET /health/ready`
 
-## 9. Rate Limit Politikasi
+## 9. Rate Limit Policy
 
-- `auth` policy: 5 istek / dakika
-- `api` policy: 100 istek / dakika
-- Hub seviyesinde `SendTypingIndicator` ve `MarkMessageAsRead` icin memory-cache tabanli dakikalik limit
+- `auth` policy: 5 requests/minute
+- `api` policy: 100 requests/minute
+- Additional per-minute hub limits for `SendTypingIndicator` and `MarkMessageAsRead`
 
-## 10. Pratik Tuketim Notlari
+## 10. Integration Notes
 
-- Tum business endpointleri `isSuccess` kontrolu ile okunmalidir.
-- 401 durumunda token refresh mekanizmasi client tarafinda uygulanmalidir.
-- Validation hatalarinda `details[]` mesaji UI'da oldugu gibi kullaniciya yansitilabilir.
-- Message listelemede cursor (`beforeMessageId`) tercih etmek gecmisi kaydirarak yuklerken daha uygundur.
+- For business endpoints, always inspect `isSuccess` before consuming `value`.
+- On `401`, client-side refresh logic should run before forcing logout.
+- Validation responses can be rendered directly from `details[]`.
+- Prefer cursor-based loading (`beforeMessageId`) for message history scrolling.

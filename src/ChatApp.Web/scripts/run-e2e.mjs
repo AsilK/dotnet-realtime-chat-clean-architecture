@@ -39,6 +39,15 @@ function run(command, args, options = {}) {
   return result.status ?? 1;
 }
 
+function createComposeEnv() {
+  return {
+    ...process.env,
+    POSTGRES_PASSWORD: process.env.POSTGRES_PASSWORD ?? 'chatapp123',
+    JWT_SECRET: process.env.JWT_SECRET ?? 'e2e-jwt-secret-min-32-characters-123456',
+    VITE_ENABLE_QA_CONSOLE: process.env.VITE_ENABLE_QA_CONSOLE ?? 'false',
+  };
+}
+
 async function waitForHttp(url, timeoutMs = 180_000, intervalMs = 2_000) {
   const startedAt = Date.now();
 
@@ -62,9 +71,21 @@ async function main() {
   let playwrightExitCode = 1;
   const playwrightArgs = process.argv.slice(2);
   const shouldKeepStack = process.env.KEEP_E2E_STACK === '1';
+  const composeEnv = createComposeEnv();
 
   try {
-    const upExitCode = run('docker', ['compose', '-f', composeFile, 'up', '-d', '--build', 'web', 'api'], { cwd: resolve(webDir, '..', '..') });
+    const preDownExitCode = run('docker', ['compose', '-f', composeFile, 'down', '-v', '--remove-orphans'], {
+      cwd: resolve(webDir, '..', '..'),
+      env: composeEnv,
+    });
+    if (preDownExitCode !== 0) {
+      process.exit(preDownExitCode);
+    }
+
+    const upExitCode = run('docker', ['compose', '-f', composeFile, 'up', '-d', '--build', 'web', 'api'], {
+      cwd: resolve(webDir, '..', '..'),
+      env: composeEnv,
+    });
     if (upExitCode !== 0) {
       process.exit(upExitCode);
     }
@@ -75,7 +96,10 @@ async function main() {
     playwrightExitCode = run('npm', ['exec', '--', 'playwright', 'test', ...playwrightArgs]);
   } finally {
     if (!shouldKeepStack) {
-      run('docker', ['compose', '-f', composeFile, 'down'], { cwd: resolve(webDir, '..', '..') });
+      run('docker', ['compose', '-f', composeFile, 'down', '-v', '--remove-orphans'], {
+        cwd: resolve(webDir, '..', '..'),
+        env: composeEnv,
+      });
     }
   }
 
