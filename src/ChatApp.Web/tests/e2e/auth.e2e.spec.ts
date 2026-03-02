@@ -45,7 +45,17 @@ test.describe('Auth flows', () => {
     await expect(page).toHaveURL(/\/chat/);
     await expect(page.getByText(`@${user.auth.username}`)).toBeVisible();
 
-    const refreshedAccessToken = await readAccessToken(page);
+    let refreshedAccessToken: string | null = null;
+    await expect
+      .poll(
+        async () => {
+          refreshedAccessToken = await readAccessToken(page);
+          return refreshedAccessToken;
+        },
+        { timeout: 15_000 },
+      )
+      .not.toBe('invalid-access-token');
+
     expect(refreshedAccessToken).toBeTruthy();
     expect(refreshedAccessToken).not.toBe('invalid-access-token');
   });

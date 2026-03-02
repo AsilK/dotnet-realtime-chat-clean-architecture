@@ -69,7 +69,7 @@ async function main() {
       process.exit(upExitCode);
     }
 
-    await waitForHttp('http://localhost:5000/health/live');
+    await waitForHttp('http://localhost:5000/health/ready');
     await waitForHttp('http://localhost:5173');
 
     playwrightExitCode = run('npm', ['exec', '--', 'playwright', 'test', ...playwrightArgs]);

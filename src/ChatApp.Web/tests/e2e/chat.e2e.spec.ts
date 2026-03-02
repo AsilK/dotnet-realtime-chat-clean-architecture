@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import { createRoom, registerUser } from './helpers/apiClient';
 import { seedAuthTokens } from './helpers/authStorage';
+
+async function waitForRealtimeReady(page: Page) {
+  await expect(page.locator('.connection-badge')).toHaveText(/connected/i, { timeout: 20_000 });
+}
 
 test.describe('Chat flows', () => {
   test('create room + join + send + edit + delete message', async ({ page }) => {
@@ -12,6 +17,7 @@ test.describe('Chat flows', () => {
 
     await page.goto('/chat');
     await expect(page).toHaveURL(/\/chat/);
+    await waitForRealtimeReady(page);
 
     const roomName = `pw-room-${Date.now()}`;
     const firstMessage = `hello-${Date.now()}`;
@@ -62,6 +68,8 @@ test.describe('Chat flows', () => {
 
       await pageA.goto('/chat');
       await pageB.goto('/chat');
+      await waitForRealtimeReady(pageA);
+      await waitForRealtimeReady(pageB);
 
       const roomButtonA = pageA.getByRole('button', { name: new RegExp(roomName) });
       const roomButtonB = pageB.getByRole('button', { name: new RegExp(roomName) });
@@ -80,6 +88,7 @@ test.describe('Chat flows', () => {
       await pageA.getByRole('button', { name: 'Send' }).click();
 
       await pageB.reload();
+      await waitForRealtimeReady(pageB);
       await pageB.getByRole('button', { name: new RegExp(roomName) }).click();
       await expect(pageB.locator('.message-item p', { hasText: messageText })).toBeVisible();
       await pageB.getByRole('button', { name: 'Mark Read' }).first().click();
