@@ -6,6 +6,8 @@
 TestResults/
 **/TestResults/
 coverage-report/
+**/playwright-report/
+**/test-results/
 
 # Local tools
 .tools/
