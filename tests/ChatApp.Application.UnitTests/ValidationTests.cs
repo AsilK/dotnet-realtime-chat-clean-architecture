@@ -1,4 +1,6 @@
 ﻿using ChatApp.Application.Common.Interfaces;
+using ChatApp.Application.Features.Auth.Commands.ConfirmPasswordReset;
+using ChatApp.Application.Features.Auth.Commands.RequestEmailVerification;
 using ChatApp.Application.Features.Auth.Commands.Register;
 using ChatApp.Application.Features.Messages.Commands.SendMessage;
 using ChatApp.Domain.Enums;
@@ -34,5 +36,23 @@ public sealed class ValidationTests
         mock.Setup(x => x.UserId).Returns(Guid.NewGuid());
 
         mock.Object.UserId.Should().NotBe(Guid.Empty);
+    }
+
+    [Fact]
+    public void RequestEmailVerificationValidator_ShouldFail_ForInvalidEmail()
+    {
+        var validator = new RequestEmailVerificationCommandValidator();
+        var result = validator.Validate(new RequestEmailVerificationCommand("not-an-email"));
+
+        result.IsValid.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ConfirmPasswordResetValidator_ShouldFail_ForWeakPassword()
+    {
+        var validator = new ConfirmPasswordResetCommandValidator();
+        var result = validator.Validate(new ConfirmPasswordResetCommand("token", "weak"));
+
+        result.IsValid.Should().BeFalse();
     }
 }

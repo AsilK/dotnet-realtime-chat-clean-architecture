@@ -4,6 +4,8 @@
 
 - JWT bearer tokens for API and SignalR.
 - Rotating refresh token flow with token hash persistence.
+- Email verification token flow (single-use, TTL in cache).
+- Password reset token flow (single-use, TTL in cache).
 
 ## Password Policy
 
@@ -38,3 +40,4 @@
 ## Audit Logging
 
 - Request/response metadata logs and error logs via middleware.
+- SMTP email send attempts are logged by the email sender service.

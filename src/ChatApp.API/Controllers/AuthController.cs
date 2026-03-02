@@ -1,8 +1,12 @@
 ﻿using ChatApp.Application.Common.Models;
 using ChatApp.Application.Features.Auth.Commands.Login;
 using ChatApp.Application.Features.Auth.Commands.Logout;
+using ChatApp.Application.Features.Auth.Commands.ConfirmPasswordReset;
+using ChatApp.Application.Features.Auth.Commands.RequestEmailVerification;
+using ChatApp.Application.Features.Auth.Commands.RequestPasswordReset;
 using ChatApp.Application.Features.Auth.Commands.RefreshToken;
 using ChatApp.Application.Features.Auth.Commands.Register;
+using ChatApp.Application.Features.Auth.Commands.VerifyEmail;
 using ChatApp.Application.Features.Auth.Queries.GetCurrentUser;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -38,6 +42,30 @@ public sealed class AuthController : ControllerBase
     [AllowAnonymous]
     [EnableRateLimiting("auth")]
     public Task<Result<AuthResponseDto>> Refresh([FromBody] RefreshTokenCommand command)
+        => _mediator.Send(command);
+
+    [HttpPost("email-verification/request")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public Task<Result> RequestEmailVerification([FromBody] RequestEmailVerificationCommand command)
+        => _mediator.Send(command);
+
+    [HttpPost("email-verification/confirm")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public Task<Result> ConfirmEmailVerification([FromBody] VerifyEmailCommand command)
+        => _mediator.Send(command);
+
+    [HttpPost("password-reset/request")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public Task<Result> RequestPasswordReset([FromBody] RequestPasswordResetCommand command)
+        => _mediator.Send(command);
+
+    [HttpPost("password-reset/confirm")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public Task<Result> ConfirmPasswordReset([FromBody] ConfirmPasswordResetCommand command)
         => _mediator.Send(command);
 
     [HttpPost("logout")]

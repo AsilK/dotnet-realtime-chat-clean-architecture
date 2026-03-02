@@ -12,15 +12,18 @@ public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, Re
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly IMediator _mediator;
 
     public RegisterCommandHandler(
         IUnitOfWork unitOfWork,
         IPasswordHasher passwordHasher,
-        IJwtTokenService jwtTokenService)
+        IJwtTokenService jwtTokenService,
+        IMediator mediator)
     {
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
+        _mediator = mediator;
     }
 
     public async Task<Result<AuthResponseDto>> Handle(RegisterCommand request, CancellationToken cancellationToken)
@@ -52,6 +55,9 @@ public sealed class RegisterCommandHandler : IRequestHandler<RegisterCommand, Re
         await _unitOfWork.Users.AddAsync(user, cancellationToken);
         await _unitOfWork.RefreshTokens.AddAsync(refreshToken, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _mediator.Send(
+            new global::ChatApp.Application.Features.Auth.Commands.RequestEmailVerification.RequestEmailVerificationCommand(user.Email),
+            cancellationToken);
 
         var response = new AuthResponseDto(
             user.Id,

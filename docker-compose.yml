@@ -15,6 +15,14 @@
       - JwtSettings__AccessTokenExpirationMinutes=15
       - JwtSettings__RefreshTokenExpirationDays=7
       - Serilog__SeqUrl=http://seq
+      - Smtp__Enabled=${SMTP_ENABLED:-false}
+      - Smtp__Host=${SMTP_HOST:-smtp.sendgrid.net}
+      - Smtp__Port=${SMTP_PORT:-587}
+      - Smtp__UseSsl=${SMTP_USE_SSL:-true}
+      - Smtp__Username=${SMTP_USERNAME:-apikey}
+      - Smtp__Password=${SMTP_PASSWORD:-}
+      - Smtp__FromEmail=${SMTP_FROM_EMAIL:-no-reply@chatapp.local}
+      - Smtp__FromName=${SMTP_FROM_NAME:-ChatApp}
     depends_on:
       - postgres
       - redis

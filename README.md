@@ -2,6 +2,8 @@
 
 Real-time chat backend built with .NET 8, Clean Architecture, CQRS, SignalR, PostgreSQL, and Redis.
 
+Auth includes email verification and password reset flows over SMTP provider integration.
+
 ## Quick Start
 
 1. Start full stack (API + PostgreSQL + Redis + Seq):

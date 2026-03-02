@@ -9,6 +9,10 @@ Base URL: `http://localhost:5000`
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
+- `POST /api/auth/email-verification/request`
+- `POST /api/auth/email-verification/confirm`
+- `POST /api/auth/password-reset/request`
+- `POST /api/auth/password-reset/confirm`
 
 ## Chat Rooms
 

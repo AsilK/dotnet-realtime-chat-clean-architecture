@@ -19,6 +19,14 @@ Services:
 - `JwtSettings__Secret`
 - `JwtSettings__Issuer`
 - `JwtSettings__Audience`
+- `Smtp__Enabled`
+- `Smtp__Host`
+- `Smtp__Port`
+- `Smtp__UseSsl`
+- `Smtp__Username`
+- `Smtp__Password`
+- `Smtp__FromEmail`
+- `Smtp__FromName`
 
 `JwtSettings__Secret` değeri HS256 için en az 32 byte (256 bit) olmalıdır.
 
