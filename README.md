@@ -12,6 +12,14 @@ Proje; Domain merkezli tasarim, CQRS/MediatR pipeline, SignalR realtime ile Post
 - React tabanli test UI ve QA paneli
 - Unit, integration, functional ve E2E test katmanlari
 
+## Olculebilir Sonuclar
+
+- Backend testleri: `12/12` gecti (`dotnet test`)
+- E2E senaryolari: `4/4` gecti (`npm run test:e2e`)
+- Frontend bundle iyilestirmesi:
+  - Onceki tek chunk: `~510.86 kB`
+  - Sonraki en buyuk entry chunk: `226.65 kB` (gzip `74.51 kB`)
+
 ## Hedef Kitle
 
 - Realtime chat altyapisini referans almak isteyen ekipler
