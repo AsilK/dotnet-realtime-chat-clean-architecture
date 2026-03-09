@@ -1,0 +1,2 @@
+# Ignore false positive in .env.example placeholder
+44debe1c9bab7c1f3b5330b78c9834be1a27ef2a:.env.example:generic-api-key:10
